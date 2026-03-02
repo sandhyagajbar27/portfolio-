@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Attendance Tracker</title>
+
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background: #f2f6ff;
+  margin: 0;
+  padding: 20px;
+}
+
+.container {
+  max-width: 900px;
+  margin: auto;
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+h1 {
+  text-align: center;
+  color: #4a90e2;
+}
+
+form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+input, select, button {
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+input, select {
+  flex: 1;
+  min-width: 150px;
+}
+
+button {
+  background: #4a90e2;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #357bd8;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th, td {
+  padding: 10px;
+  border: 1px solid #ddd;
+  text-align: center;
+}
+
+.present {
+  color: green;
+  font-weight: bold;
+}
+
+.absent {
+  color: red;
+  font-weight: bold;
+}
+
+.action-btn {
+  padding: 5px 8px;
+  margin: 2px;
+  font-size: 12px;
+}
+
+@media (max-width: 600px) {
+  form {
+    flex-direction: column;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+  <h1>Attendance Tracker</h1>
+
+  <form id="attendanceForm">
+    <input type="text" id="name" placeholder="Student Name" required>
+    <input type="text" id="className" placeholder="Class Name" required>
+    <input type="date" id="date" readonly>
+
+    <select id="status">
+      <option value="Present">Present</option>
+      <option value="Absent">Absent</option>
+    </select>
+
+    <button type="submit">Add Student</button>
+  </form>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Class</th>
+        <th>Date</th>
+        <th>Status</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody id="attendanceTable"></tbody>
+  </table>
+</div>
+
+<script>
+let students = JSON.parse(localStorage.getItem("students")) || [];
+
+const today = new Date().toISOString().split("T")[0];
+document.getElementById("date").value = today;
+
+const form = document.getElementById("attendanceForm");
+const table = document.getElementById("attendanceTable");
+
+function saveData() {
+  localStorage.setItem("students", JSON.stringify(students));
+}
+
+function displayStudents() {
+  table.innerHTML = "";
+
+  students.forEach((student, index) => {
+    let row = `
+      <tr>
+        <td>${student.name}</td>
+        <td>${student.className}</td>
+        <td>${student.date}</td>
+        <td class="${student.status === 'Present' ? 'present' : 'absent'}">
+          ${student.status}
+        </td>
+        <td>
+          <button class="action-btn" onclick="toggleStatus(${index})">Toggle</button>
+          <button class="action-btn" onclick="deleteStudent(${index})">Delete</button>
+        </td>
+      </tr>
+    `;
+    table.innerHTML += row;
+  });
+}
+
+form.addEventListener("submit", function(e) {
+  e.preventDefault();
+
+  let newStudent = {
+    name: document.getElementById("name").value,
+    className: document.getElementById("className").value,
+    date: document.getElementById("date").value,
+    status: document.getElementById("status").value
+  };
+
+  students.push(newStudent);
+  saveData();
+  displayStudents();
+  form.reset();
+});
+
+function toggleStatus(index) {
+  students[index].status =
+    students[index].status === "Present" ? "Absent" : "Present";
+  saveData();
+  displayStudents();
+}
+
+function deleteStudent(index) {
+  students.splice(index, 1);
+  saveData();
+  displayStudents();
+}
+
+displayStudents();
+</script>
+
+</body>
+</html>
