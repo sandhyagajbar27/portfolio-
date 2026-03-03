@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8">
@@ -83,6 +83,20 @@ th, td {
   font-size: 12px;
 }
 
+#downloadBtn {
+  margin-top: 15px;
+  background: #28a745;
+  color: white;
+  padding: 10px 15px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+#downloadBtn:hover {
+  background: #1e7e34;
+}
+
 @media (max-width: 600px) {
   form {
     flex-direction: column;
@@ -100,12 +114,10 @@ th, td {
     <input type="text" id="name" placeholder="Student Name" required>
     <input type="text" id="className" placeholder="Class Name" required>
     <input type="date" id="date" readonly>
-
     <select id="status">
       <option value="Present">Present</option>
       <option value="Absent">Absent</option>
     </select>
-
     <button type="submit">Add Student</button>
   </form>
 
@@ -121,33 +133,38 @@ th, td {
     </thead>
     <tbody id="attendanceTable"></tbody>
   </table>
+  
+  <button id="downloadBtn">Download CSV</button>
 </div>
 
 <script>
+// Load saved students from localStorage
 let students = JSON.parse(localStorage.getItem("students")) || [];
 
-const today = new Date().toISOString().split("T")[0];
-document.getElementById("date").value = today;
+// Auto-fill today's date
+function getToday() {
+  return new Date().toISOString().split("T")[0];
+}
+document.getElementById("date").value = getToday();
 
 const form = document.getElementById("attendanceForm");
 const table = document.getElementById("attendanceTable");
 
+// Save students to localStorage
 function saveData() {
   localStorage.setItem("students", JSON.stringify(students));
 }
 
+// Display students in table
 function displayStudents() {
   table.innerHTML = "";
-
   students.forEach((student, index) => {
     let row = `
       <tr>
         <td>${student.name}</td>
         <td>${student.className}</td>
         <td>${student.date}</td>
-        <td class="${student.status === 'Present' ? 'present' : 'absent'}">
-          ${student.status}
-        </td>
+        <td class="${student.status === 'Present' ? 'present' : 'absent'}">${student.status}</td>
         <td>
           <button class="action-btn" onclick="toggleStatus(${index})">Toggle</button>
           <button class="action-btn" onclick="deleteStudent(${index})">Delete</button>
@@ -158,35 +175,53 @@ function displayStudents() {
   });
 }
 
+// Add new student
 form.addEventListener("submit", function(e) {
   e.preventDefault();
-
   let newStudent = {
     name: document.getElementById("name").value,
     className: document.getElementById("className").value,
-    date: document.getElementById("date").value,
+    date: getToday(), // always use current date
     status: document.getElementById("status").value
   };
-
   students.push(newStudent);
   saveData();
   displayStudents();
   form.reset();
+  document.getElementById("date").value = getToday();
 });
 
+// Toggle Present/Absent
 function toggleStatus(index) {
-  students[index].status =
-    students[index].status === "Present" ? "Absent" : "Present";
+  students[index].status = students[index].status === "Present" ? "Absent" : "Present";
   saveData();
   displayStudents();
 }
 
+// Delete student
 function deleteStudent(index) {
   students.splice(index, 1);
   saveData();
   displayStudents();
 }
 
+// Download CSV
+document.getElementById("downloadBtn").addEventListener("click", function() {
+  if(students.length === 0) {
+    alert("No students to download!");
+    return;
+  }
+  let csv = "Name,Class,Date,Status\n";
+  students.forEach(student => {
+    csv += `${student.name},${student.className},${student.date},${student.status}\n`;
+  });
+  const hiddenElement = document.createElement("a");
+  hiddenElement.href = "data:text/csv;charset=utf-8," + encodeURIComponent(csv);
+  hiddenElement.download = "attendance_list.csv";
+  hiddenElement.click();
+});
+
+// Display students on page load
 displayStudents();
 </script>
 
